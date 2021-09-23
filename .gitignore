@@ -6,6 +6,8 @@
 *.iws
 .idea/vcs.xml
 
+./venv
+
 biligo/
 .vscode/
 
@@ -53,4 +55,6 @@ adx_model/export/*
 adx_model/model_dir/model/*
 adx_model/part-*
 *.gitignore
+
+
 
