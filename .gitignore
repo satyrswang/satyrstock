@@ -6,7 +6,7 @@
 *.iws
 .idea/vcs.xml
 
-./venv
+./venv/
 
 biligo/
 .vscode/
