@@ -55,33 +55,4 @@ if __name__ == "__main__":
     for i in ["volume"]:
         df[i] = df[i].apply(lambda x: int(x))
 
-    dx = df["time"].apply(lambda x:x[2:12])
-    df = df.drop("date",axis=1)
-    df = df.drop("code",axis=1)
-    df = df.drop("time",axis=1)
-
-    print(df.head(4))
-
-    df=df[["open","close","low","high"]]
-    df = df.values
-
     print(df)
-
-    c = (
-        Candlestick(init_opts=opts.InitOpts(width="1440px", height="720px"))
-            .add_xaxis(xaxis_data=dx)
-            .add_yaxis(series_name="", y_axis=df)
-            .set_series_opts()
-            .set_global_opts(
-            yaxis_opts=opts.AxisOpts(
-                splitline_opts=opts.SplitLineOpts(
-                    is_show=True, linestyle_opts=opts.LineStyleOpts(width=1)
-                )
-            )
-        )
-            # .render(title+".html")
-    )
-
-
-
-    make_snapshot(snapshot, c.render(), title+".png")
