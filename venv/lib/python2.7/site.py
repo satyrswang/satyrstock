@@ -677,7 +677,7 @@ def enablerlcompleter():
     """Enable default readline configuration on interactive prompts, by
     registering a sys.__interactivehook__.
     If the readline module can be imported, the hook will set the Tab key
-    as completion key and register ~/.python_history as history file.
+    as completion key and register ~/.python_history as get_data file.
     This can be overridden in the sitecustomize or usercustomize module,
     or in a PYTHONSTARTUP file.
     """
@@ -709,8 +709,8 @@ def enablerlcompleter():
             pass
 
         if readline.get_current_history_length() == 0:
-            # If no history was loaded, default to .python_history.
-            # The guard is necessary to avoid doubling history size at
+            # If no get_data was loaded, default to .python_history.
+            # The guard is necessary to avoid doubling get_data size at
             # each interpreter exit when readline was already configured
             # through a PYTHONSTARTUP hook, see:
             # http://bugs.python.org/issue5845#msg198636
