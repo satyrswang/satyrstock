@@ -15,31 +15,29 @@ from utils.log_in import login_tushare
 
 
 class RT(object):
-    def __init__(self,code = '000538',thre_price_high = 103,thre_price_low = 100,thre_chg = 0.03,thre_chg_ng =  -0.01,auto=True):
+    def __init__(self, code='000538', thre_price_high=103, thre_price_low=99, thre_chg=0.03, thre_chg_ng=-0.02,
+                 auto=False, prefix='/Users/wyq/PycharmProjects/stock/'):
 
         self.code = code
         self.thre_price_high = thre_price_high
         self.thre_price_low = thre_price_low
         self.thre_chg = thre_chg
-        self.thre_chg_ng =  thre_chg_ng
+        self.thre_chg_ng = thre_chg_ng
+        self.dir_prefix = prefix
 
         self.auto = auto
 
         login_tushare()
         pandas_pretty_printing()
 
-
-    def distinct(self,file):
+    def distinct(self, file):
 
         tmp = pd.read_csv(file)
-        tmp.drop_duplicates(inplace=True,ignore_index=True)
-        tmp.to_csv('./tmp.csv',index=False)
+        tmp.drop_duplicates(inplace=True, ignore_index=True)
+        tmp.to_csv('./tmp.csv', index=False)
 
         os.system("cp -rf ./tmp.csv " + file)
         os.system("rm -rf ./tmp.csv")
-
-
-
 
     def start_recording(self):
         """
@@ -72,7 +70,7 @@ class RT(object):
                 31：time，时间；
         """
 
-        dir = './' + str(self.code)+'_real'
+        dir = self.dir_prefix + str(self.code) + '_real'
         if not os.path.exists(dir):
             os.mkdir(dir)
 
@@ -82,7 +80,8 @@ class RT(object):
         curtime = time.strftime("%Y-%m-%d", time.localtime())
 
         print(f"MY STOCK PROGRAM PIDP:{os.getpid()}")
-        filename = dir+"/" + str(curtime) + '_' + str(self.code) + '.csv'
+        filename = dir + "/" + str(curtime) + '_' + str(self.code) + '.csv'
+        print(f"SavedFileName:{filename}")
 
         while True:
             time.sleep(1)
@@ -91,7 +90,7 @@ class RT(object):
                 # 时间到3点01分则抛出exception
                 donett = time.strftime("%H%M%S", time.localtime())
 
-                if int(donett) > 113001 and int(donett) < 125050:
+                if int(donett) > 113110 and int(donett) < 125050:
                     time.sleep(600)
                     print(donett)
                     continue
@@ -130,6 +129,7 @@ class RT(object):
                     print(tabulate(dfp, headers='keys', tablefmt='psql', showindex=False))
 
                     if int(donett) > 150150:
+                        print(f"TIME:{donett}")
                         raise Exception("TIME REACHED")
 
 
@@ -140,14 +140,10 @@ class RT(object):
 
                 self.distinct(filename)
 
-
                 break
-
-
 
 
 if __name__ == '__main__':
     rt = RT()
     rt.start_recording()
-    #rt.distinct('000538.SZ/2021-09-27_000538.csv')
-
+    # rt.distinct('000538.SZ/2021-09-27_000538.csv')
