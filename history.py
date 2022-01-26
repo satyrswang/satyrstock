@@ -9,6 +9,8 @@ import pandas as pd
 import json
 from urllib import request
 
+from utils.log_in import login_bs, bs_exit
+
 DAY_PRICE_COLS = ['date', 'open', 'high', 'close', 'low', 'volume', 'chg', '%chg', 'ma5', 'ma10', 'ma20',
                   'vma5', 'vma10', 'vma20', 'turnover']
 DAY_PRICE_URL = '%sapi.finance.%s/%s/?code=%s&type=last'
@@ -35,22 +37,16 @@ class History(object):
         self.e_date = e_date
         self.path = path
 
-        self.lg = bs.login()
-        print('login respond error_code:' + self.lg.error_code)
-        print('login respond  error_msg:' + self.lg.error_msg)
-
         self.df = None
         self.dir = './' + str(code)
         if  not os.path.exists(self.dir):
             os.mkdir(self.dir)
 
-    def exit(self):
-        bs.logout()
 
     def get_daily_df(self):
         # 分钟线指标：date,time,code,open,high,low,close,volume,amount,adjustflag
         # 周月线指标：date,code,open,high,low,close,volume,amount,adjustflag,turn,pctChg
-
+        login_bs()
         rs = bs.query_history_k_data_plus(self.code,
                                           "date,code,open,high,low,close,preclose,volume,amount,adjustflag,turn,tradestatus,pctChg,isST",
                                           start_date=self.s_date, end_date=self.e_date,
@@ -78,6 +74,8 @@ class History(object):
         df.to_csv(self.dir + '/' + path, index=True)
 
         self.df = df
+        bs_exit()
+
 
     def plot_daily_df(self):
 
@@ -112,8 +110,9 @@ class History(object):
         df.to_csv(self.dir + '/' + path, index=False)
         print(df)
 
-    def get_minute_df(self, minu=30):
 
+    def get_minute_df(self, minu=30):
+        login_bs()
         path = './' + str(self.code) + '_' + str(minu) + 'min'
 
         #title = "Kline-30min-" + str(self.code)
@@ -145,6 +144,8 @@ class History(object):
 
         df.to_csv(self.dir + '/' + path, index=False)
 
+        bs_exit()
+
 
 # import pandas_datareader.data as web
 # df_stockload = web.DataReader("600797.SS", "yahoo", datetime.datetime(2018, 1, 1), datetime.datetime(2019, 1, 1))
@@ -154,6 +155,6 @@ class History(object):
 if __name__ == '__main__':
     d = History()
     d.get_daily_df()
-    # d.get_minute_df(30)
+    #d.get_minute_df(30)
 
     d.get_daily_df_2()

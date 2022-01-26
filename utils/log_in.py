@@ -1,6 +1,6 @@
 
 import tushare as ts
-
+import  baostock as bs
 
 
 
@@ -9,3 +9,12 @@ def login_tushare():
     ts.set_token(token)
     pro = ts.pro_api()
     return ts,pro
+
+
+def login_bs():
+    lg = bs.login()
+    print('login respond error_code:' + lg.error_code)
+    print('login respond  error_msg:' + lg.error_msg)
+
+def bs_exit():
+    bs.logout()

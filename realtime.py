@@ -3,6 +3,7 @@ import tushare as ts
 from io import StringIO
 from tabulate import tabulate
 from subprocess import call
+import  easyquotation
 import numpy as np
 import pandas as pd
 import datetime
@@ -12,11 +13,18 @@ import csv
 import os
 from utils.pandas_print import pandas_pretty_printing
 from utils.log_in import login_tushare
+import  sys
+import logging
 
+logname = '/Users/wyq/PycharmProjects/stock/000538_real/out_'+str(time.strftime("%Y-%m-%d", time.localtime()))+'.log'
+# f_handler=open(logname, 'a+')
+# sys.stdout=f_handler
+logging.basicConfig(format='%(asctime)s %(message)s', filename=logname)
+logging.getLogger().setLevel(logging.INFO)
 
 class RT(object):
-    def __init__(self, code='000538', thre_price_high=103, thre_price_low=99, thre_chg=0.03, thre_chg_ng=-0.02,
-                 auto=False, prefix='/Users/wyq/PycharmProjects/stock/'):
+    def __init__(self, code='000538', thre_price_high=101, thre_price_low=98, thre_chg=0.03, thre_chg_ng=-0.02,
+                 auto=True, prefix='/Users/wyq/PycharmProjects/stock/'):
 
         self.code = code
         self.thre_price_high = thre_price_high
@@ -32,7 +40,7 @@ class RT(object):
 
     def distinct(self, file):
 
-        tmp = pd.read_csv(file)
+        tmp = pd.read_csv(file,low_memory=False)
         tmp.drop_duplicates(inplace=True, ignore_index=True)
         tmp.to_csv('./tmp.csv', index=False)
 
@@ -79,12 +87,12 @@ class RT(object):
 
         curtime = time.strftime("%Y-%m-%d", time.localtime())
 
-        print(f"MY STOCK PROGRAM PIDP:{os.getpid()}")
+        logging.info(f"MY STOCK PROGRAM PIDP:{os.getpid()}")
         filename = dir + "/" + str(curtime) + '_' + str(self.code) + '.csv'
-        print(f"SavedFileName:{filename}")
+        logging.info(f"SavedFileName:{filename}")
 
         while True:
-            time.sleep(1)
+            time.sleep(0.5)
             try:
 
                 # 时间到3点01分则抛出exception
@@ -92,30 +100,44 @@ class RT(object):
 
                 if int(donett) > 113110 and int(donett) < 125050:
                     time.sleep(600)
-                    print(donett)
+                    logging.info(donett)
                     continue
                 else:
 
-                    df = ts.get_realtime_quotes(self.code)
+                    #df = ts.get_realtime_quotes(self.code)
+                    df = easyquotation.use("sina").stocks(self.code)
+                    tmp = df[self.code]
+                    for k in tmp:
+                        tmp[k] = [tmp[k]]
+                    df = pd.DataFrame.from_dict(tmp)
+
                     now_price = df.iloc[0, 3]
                     close_p = df.iloc[0, 2]
                     open_p = df.iloc[0, 1]
-                    now_chg = round(float((float(now_price) - float(close_p)) / float(open_p)), 3)
+
+                    now_chg = round(float((float(now_price) - float(close_p)) / float(open_p)), 5)
 
                     df['chg'] = now_chg
 
+                    # dfp = df[
+                    #     ["time", "chg", "price", "bid", "ask", "volume", "amount", "open", "pre_close", "high", "low",
+                    #      "b1_v", "b1_p", "b2_v", "b2_p", "b3_v", "b3_p", "b4_v", "b4_p", "b5_v", "b5_p",
+                    #      "a1_v", "a1_p", "a2_v", "a2_p", "a3_v", "a3_p", "a4_v", "a4_p", "a5_v", "a5_p", "date",
+                    #      "name"]]
+
                     dfp = df[
-                        ["time", "chg", "price", "bid", "ask", "volume", "amount", "open", "pre_close", "high", "low",
-                         "b1_v", "b1_p", "b2_v", "b2_p", "b3_v", "b3_p", "b4_v", "b4_p", "b5_v", "b5_p",
-                         "a1_v", "a1_p", "a2_v", "a2_p", "a3_v", "a3_p", "a4_v", "a4_p", "a5_v", "a5_p", "date",
+                        ["time", "chg",  "volume", "open", "high", "low",
+                         "bid1_volume", "bid1", "bid2_volume", "bid2", "bid3_volume", "bid3", "bid4_volume", "bid4", "bid5_volume", "bid5",
+                         "ask1_volume", "ask1", "ask2_volume", "ask2", "ask3_volume", "ask3", "ask4_volume", "ask4", "ask5_volume", "ask5", "date",
                          "name"]]
+
 
                     dfp.to_csv(filename, header=False, mode="a+", index=False)
 
                     # 对于某个阈值进行提醒
                     if float(now_price) >= float(self.thre_price_high) or float(now_price) <= float(self.thre_price_low) \
                             or float(now_chg) >= float(self.thre_chg) or float(now_chg) <= float(self.thre_chg_ng):
-                        print("==========NOTIFY==========")
+                        logging.info("==========NOTIFY==========")
                         content = str(self.code) + " HIT " + str(now_price) + ' chg ' + str(now_chg)
                         cmd = 'display notification \"' + \
                               "Notificaton memo" + '\" with title \"' + str(content) + '\"'
@@ -126,24 +148,30 @@ class RT(object):
                         if not self.auto:
                             itchat.send(content, toUserName='filehelper')
 
-                    print(tabulate(dfp, headers='keys', tablefmt='psql', showindex=False))
+                    logging.info(tabulate(dfp, headers='keys', tablefmt='psql', showindex=False))
 
                     if int(donett) > 150150:
-                        print(f"TIME:{donett}")
+                        logging.info(f"TIME:{donett}")
                         raise Exception("TIME REACHED")
 
-
-
             except Exception as e:
-                print("DONE")
+                logging.info("DONE")
                 # 开始处理csv，将同样的行删除，time按照秒还是会有重复的
-
-                self.distinct(filename)
-
-                break
+                donett = time.strftime("%H%M%S", time.localtime())
+                if int(donett) > 150150:
+                    self.distinct(filename)
+                    break
+                else:
+                    logging.info(f"Exception:{e}")
+                    continue
 
 
 if __name__ == '__main__':
-    rt = RT()
+    thre_price_high = 101
+    thre_price_low = 92
+    thre_chg = 0.03
+    thre_chg_ng = -0.02
+
+    rt = RT(thre_price_high=thre_price_high,thre_price_low=thre_price_low,thre_chg=thre_chg,thre_chg_ng=thre_chg_ng)
     rt.start_recording()
     # rt.distinct('000538.SZ/2021-09-27_000538.csv')
